@@ -175,6 +175,21 @@ QString CBMroutines::randomString(const int len)
     return output;
 }
 
+QString CBMroutines::randomFullString(const int len)
+{
+    QString output = "";
+
+    static const char alpha[] =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+#";
+
+    for (int i = 0; i < len; i++)
+    {
+        output.append(alpha[rand() % (sizeof(alpha) -1)]);
+    }
+
+    return output;
+}
+
 QString CBMroutines::formatFileSize(qint64 size)
 {
     float outputsize = 0;

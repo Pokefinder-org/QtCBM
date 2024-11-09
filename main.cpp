@@ -42,7 +42,7 @@ void localMessageHandler(QtMsgType type, const QMessageLogContext &context, cons
     QFile outFile(directory + "/messages.log");
     outFile.open(QIODevice::WriteOnly | QIODevice::Append);
     QTextStream ts(&outFile);
-    ts << txt << endl;
+    ts << txt << Qt::endl;
     ts.flush();
     outFile.close();
 }

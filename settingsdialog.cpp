@@ -21,10 +21,24 @@ settingsDialog::settingsDialog(QWidget *parent) :
     ui->input_cbmcopy->setText(settings->value("tools/cbmcopy", findCBMUtil("cbmcopy")).toString());
     ui->input_morse->setText(settings->value("tools/morse", findCBMUtil("morse")).toString());
     ui->input_cbmdevice->setValue(settings->value("deviceid", 8).toInt());
+    ui->input_usetracks->setChecked(settings->value("usetracks", false).toBool());
+    ui->input_starttrack->setValue(settings->value("starttrack", 1).toInt());
+    ui->input_endtrack->setValue(settings->value("endtrack", 35).toInt());
     ui->autoRefresh->setChecked(settings->value("autorefresh", true).toBool());
     ui->showCommands->setChecked(settings->value("showcmd", false).toBool());
     //ui->useC64font->setChecked(settings->value("usec64font", false).toBool());
     ui->genRandomDiskname->setChecked(settings->value("genrandomdisk", false).toBool());
+    ui->appendMap->setChecked(settings->value("appendmap", false).toBool());
+    ui->formatVerify->setChecked(settings->value("formatverify", true).toBool());
+    ui->formatExtended->setChecked(settings->value("formatextended", false).toBool());
+    ui->formatNobump->setChecked(settings->value("formatnobump", true).toBool());
+    ui->formatOriginal->setChecked(settings->value("formatoriginal", true).toBool());
+
+    if (ui->input_usetracks->isChecked())
+        ui->frame_3->setEnabled(true);
+    else
+        ui->frame_3->setEnabled(false);
+
     QString transfermode = settings->value("transfermode", "auto").toString();
     QString cableType = settings->value("cableType", "xum1541").toString();
 
@@ -96,11 +110,20 @@ void settingsDialog::on_buttonBox_accepted()
     settings->setValue("tools/cbmcopy", ui->input_cbmcopy->text());
     settings->setValue("tools/morse", ui->input_morse->text());
     settings->setValue("deviceid", ui->input_cbmdevice->value());
+    settings->setValue("usetracks", ui->input_usetracks->isChecked());
+    settings->setValue("starttrack", ui->input_starttrack->value());
+    settings->setValue("endtrack", ui->input_endtrack->value());
     settings->setValue("transfermode", getTransferMode());
     settings->setValue("showcmd", ui->showCommands->isChecked());
     settings->setValue("autorefresh", ui->autoRefresh->isChecked());
     //settings->setValue("usec64font", ui->useC64font->isChecked());
     settings->setValue("genrandomdisk", ui->genRandomDiskname->isChecked());
+    settings->setValue("appendmap", ui->appendMap->isChecked());
+    settings->setValue("formatverify", ui->formatVerify->isChecked());
+    settings->setValue("formatextended", ui->formatExtended->isChecked());
+    settings->setValue("formatnobump", ui->formatNobump->isChecked());
+    settings->setValue("formatoriginal", ui->formatOriginal->isChecked());
+
     settings->setValue("cableType", getCableType());
     settings->sync();
 
@@ -135,6 +158,24 @@ void settingsDialog::on_cbmctrl_reset_clicked()
 {
     ui->input_cbmctrl->setText(findCBMUtil("cbmctrl"));
 }
+
+void settingsDialog::on_usetracks_clicked()
+{
+    if (ui->input_usetracks->isChecked())
+        ui->frame_3->setEnabled(true);
+    else
+        ui->frame_3->setEnabled(false);
+}
+
+void settingsDialog::on_track_reset_clicked()
+{
+    ui->input_cbmdevice->setValue(8);
+    ui->input_starttrack->setValue(1);
+    ui->input_endtrack->setValue(35);
+}
+
+
+
 
 void settingsDialog::on_d64copy_reset_clicked()
 {

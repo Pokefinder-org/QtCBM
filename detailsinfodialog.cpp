@@ -1,5 +1,6 @@
 #include "detailsinfodialog.h"
 #include "ui_detailsinfodialog.h"
+#include <QStyle>
 
 detailsInfoDialog::detailsInfoDialog(QWidget *parent) :
     QDialog(parent),

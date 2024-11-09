@@ -136,7 +136,7 @@ FileWindow::FileWindow(QWidget *parent) :
     foldersModel->setFilter(QDir::NoDotAndDotDot | QDir::Dirs);
     foldersModel->setRootPath(QDir::rootPath());
     ui->localFolders->setModel(foldersModel);
-    ui->localFolders->setRootIndex(foldersModel->index(QDir::homePath()));
+    ui->localFolders->setRootIndex(foldersModel->index(QDir::rootPath()));
     ui->localFolders->hideColumn(1);
     ui->localFolders->hideColumn(2);
     ui->localFolders->hideColumn(3);
@@ -144,15 +144,20 @@ FileWindow::FileWindow(QWidget *parent) :
 
     filesModel = new QFileSystemModel();
     filesModel->setFilter(QDir::NoDotAndDotDot | QDir::Files);
-    filesModel->setRootPath(QDir::homePath());
+    filesModel->setRootPath(QDir::rootPath());
     ui->localFiles->setModel(filesModel);
-    ui->localFiles->setRootIndex(filesModel->index(QDir::homePath()));
+    ui->localFiles->setRootIndex(filesModel->index(QDir::rootPath()));
+
+    ui->actionView_Home_Folder->setChecked(false);
+    ui->actionView_Drive->setChecked(true);
+
+
 
     // size the CBM file list headers
     ui->cbmFiles->header()->resizeSection(0, 45);
-    ui->cbmFiles->header()->resizeSection(1, 60);
-    ui->cbmFiles->header()->resizeSection(2, 140);
-    ui->cbmFiles->header()->resizeSection(3, 40);
+    ui->cbmFiles->header()->resizeSection(1, 140);
+    ui->cbmFiles->header()->resizeSection(2, 40);
+    ui->cbmFiles->header()->resizeSection(3, 60);
     ui->cbmFiles->hideColumn(4);
 
     // set the colors of the CBM elements
@@ -234,7 +239,11 @@ bool FileWindow::confirmExecute(QString command, QStringList params)
     if (showcmd)
     {
         QFileInfo file = QFileInfo(command);
+#ifdef Q_OS_WIN
         return (QMessageBox::information(this, "QtCBM", "About to execute:\n\n"+file.baseName()+"."+file.completeSuffix()+" "+params.join(' ')+"\n\nContinue?", QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes);
+#else
+        return (QMessageBox::information(this, "QtCBM", "About to execute:\n\n"+file.baseName()+" "+params.join(' ')+"\n\nContinue?", QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes);
+#endif
     }
     return true;
 }
@@ -262,12 +271,12 @@ void FileWindow::writeCBMconf()
     if (confFile.open(QIODevice::ReadWrite | QIODevice::Text))
     {
         QTextStream stream(&confFile);
-        stream << "[plugins]" << endl;
-        stream << "default="+cableType << endl;
-        stream << "[xu1541]" << endl;
-        stream << "location="+QCoreApplication::applicationDirPath()+"/plugins/libopencbm-xu1541.0.4.99.97.dylib" << endl;
-        stream << "[xum1541]" << endl;
-        stream << "location="+QCoreApplication::applicationDirPath()+"/plugins/libopencbm-xum1541.0.4.99.97.dylib" << endl;
+        stream << "[plugins]" << Qt::endl;
+        stream << "default="+cableType << Qt::endl;
+        stream << "[xu1541]" << Qt::endl;
+        stream << "location="+QCoreApplication::applicationDirPath()+"/plugins/libopencbm-xu1541.0.4.99.97.dylib" << Qt::endl;
+        stream << "[xum1541]" << Qt::endl;
+        stream << "location="+QCoreApplication::applicationDirPath()+"/plugins/libopencbm-xum1541.0.4.99.97.dylib" << Qt::endl;
     } else
     {
         QMessageBox::warning(this,"QtCBM","Unable to write opencbm.conf: "+confFile.errorString(), QMessageBox::Ok, QMessageBox::Ok);
@@ -296,9 +305,16 @@ void FileWindow::loadSettings()
     morse = settings->value("tools/morse", settingsDialog::findCBMUtil("morse")).toString();
     deviceid = settings->value("deviceid", 8).toInt();
     transfermode = settings->value("transfermode", "auto").toString();
+    usetracks = settings->value("usetracks", false).toBool();
+    starttrack = settings->value("starttrack", 1).toInt();
+    endtrack = settings->value("endtrack", 35).toInt();
     showcmd = settings->value("showcmd", false).toBool();
     autorefresh = settings->value("autorefresh", true).toBool();
     generateRandomDiskname = settings->value("genrandomdisk", false).toBool();
+    formatVerify = settings->value("formatverify", true).toBool();
+    formatExtended = settings->value("formatextended", false).toBool();
+    formatOriginal = settings->value("formatoriginal", true).toBool();
+    formatNobump = settings->value("formatnobump", true).toBool();
     cableType = settings->value("cableType", "xum1541").toString();
 
 #ifdef Q_OS_OSX
@@ -428,7 +444,7 @@ void FileWindow::localFiles_selectionChanged(const QItemSelection &selected, con
         QFile *file = new QFile(model->filePath(index));
         size+=file->size();
     }
-    blocks = size / 254;
+    blocks = size / 256;
     QString sizeString = CBMroutines::formatFileSize(size);
     QString blockString = QString::number(blocks);
     ui->selectedKB->setText(sizeString);
@@ -881,6 +897,10 @@ void FileWindow::cbmCopyProgress()
     {
         progbar->setValue(rx.cap(3).toInt());
         currBlock = rx.cap(4).toInt();
+
+#ifdef Q_OS_LINUX
+        progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(4)+"/"+rx.cap(5));
+#endif
 #ifdef Q_OS_WIN
         progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(4)+"/"+rx.cap(5));
 #endif
@@ -980,15 +1000,15 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
             //qDebug() << "filename: " << rxDirEntry.cap(2);
             QTreeWidgetItem *item = new QTreeWidgetItem();
             item->setText(0, CBMroutines::stringToPETSCII(rxDirEntry.cap(1).toLocal8Bit(), false, cbmctrlhasraw));
-            item->setText(1, CBMroutines::stringToPETSCII(CBMroutines::formatFileSize(rxDirEntry.cap(1).toInt()*254), cbmctrlhasraw));
-            item->setText(2, CBMroutines::stringToPETSCII(QString(rxDirEntry.cap(2)), cbmctrlhasraw));
-            item->setText(3, rxDirEntry.cap(3).toUpper());
+            item->setText(1, CBMroutines::stringToPETSCII(QString(rxDirEntry.cap(2)), cbmctrlhasraw));
+            item->setText(2, rxDirEntry.cap(3).toUpper());
+            item->setText(3, CBMroutines::stringToPETSCII(CBMroutines::formatFileSize(rxDirEntry.cap(1).toInt()*254), cbmctrlhasraw));
             item->setData(4, Qt::DisplayRole, rawname);
             ui->cbmFiles->addTopLevelItem(item);
         } else if (rxFreeSpace.indexIn(QString(dirlist.at(i))) >= 0)
         {
             //qDebug() << "freespace: " << dirlist.at(i);
-            QString tmp_fs = QString(rxFreeSpace.cap(1)+" blocks ("+CBMroutines::formatFileSize(rxFreeSpace.cap(1).toInt()*254)+") free");
+            QString tmp_fs = QString(rxFreeSpace.cap(1)+" blocks free ("+CBMroutines::formatFileSize(rxFreeSpace.cap(1).toInt()*254)+") ");
             ui->freeSpace->setText(CBMroutines::stringToPETSCII(tmp_fs.toLatin1(), false, cbmctrlhasraw));
         } else if (rxLabel.indexIn(QString(dirlist.at(i))) >= 0)
         {
@@ -1035,27 +1055,48 @@ void FileWindow::on_CBMDirectory_clicked()
 void FileWindow::on_CBMFormat_clicked()
 {
     QString diskLabel = "";
+//    QString options = "--no-bump --extended --verify --original";
+    QStringList params;
     bool ok;
 
     if (generateRandomDiskname)
-        diskLabel = CBMroutines::randomString(8)+","+QString::number(rand() % 100);
+        diskLabel = CBMroutines::randomFullString(12)+","+CBMroutines::randomFullString(2);
+
+    if (formatNobump)
+        params << "-n";
+
+    if (formatExtended)
+        params << "-x";
+
+    if (formatVerify)
+        params << "-v";
+
+    if (formatOriginal)
+        params << "-o";
+
+
+    //qDebug() << "format flags:" << options;
+
 
     if (QMessageBox::question(this, "QtCBM", "This will erase ALL data on the floppy disk. Continue?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
     {
         diskLabel = QInputDialog::getText(this, "QtCBM", "Diskname,ID:", QLineEdit::Normal, diskLabel, &ok).toUpper();
-        QRegExp rx("[\\s\\S]+,\\d+");
+//        QRegExp rx("[\\s\\S]+,[\\s\\S]+");
+        QRegExp rx("[\\s\\S]+,[\\s\\S]+");
         if (ok)
         {
             if (rx.indexIn(diskLabel) >= 0)
             {
-                if (confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << diskLabel))
+                if (confirmExecute(cbmforng, QStringList() << params << QString::number(deviceid) << diskLabel))
                 {
+                    qDebug() << "format flags:" << cbmforng << params << QString::number(deviceid) << diskLabel;
+
                     progbar = new QProgressBar(this);
                     progbar->setMinimum(0);
                     progbar->setMaximum(0);
                     ui->statusBar->addPermanentWidget(progbar);
 
-                    proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << diskLabel);
+                    proc_cbmFormat->start(cbmforng, QStringList() << params << QString::number(deviceid) << diskLabel);
                     if (!proc_cbmFormat->waitForStarted())
                     {
                         QMessageBox::warning(this,"Error", "Failed to execute "+cbmforng+"\n\nExit status: "+QString::number(proc_cbmFormat->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
@@ -1170,9 +1211,30 @@ void FileWindow::on_copyFileFromCBMdisk_clicked()
 
 void FileWindow::on_copyFromCBM_clicked()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), QDir::homePath(), tr("Disk Images (*.d64)"));
+//    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), QDir::rootPath(), tr("Disk Images (*.d64)"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), selectedLocalFolder , tr("Disk Images (*.d64)"));
 
-    if (!fileName.isEmpty() && confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName)))
+    QStringList params;
+    tracks="";
+    moretracks="";
+    appenderrormap="";
+
+    if (appendmap)
+    {
+        appenderrormap="--error-map=always";
+        params << appenderrormap;
+    }
+
+    if (usetracks)
+    {
+        tracks = "--start-track="+QString::number(starttrack);
+        moretracks =  "--end-track="+QString::number(endtrack);
+        params << tracks << moretracks;
+    }
+
+    //qDebug() << "params: "+params;
+
+    if (!fileName.isEmpty() && confirmExecute(d64copy, QStringList() << params << QString::number(deviceid) << QDir::toNativeSeparators(fileName)))
     {
         progbar = new QProgressBar(this);
         progbar->setMinimum(0);
@@ -1191,10 +1253,11 @@ void FileWindow::on_copyFromCBM_clicked()
         connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
         ui->copyToCBM->setEnabled(false);
         QFileInfo file(fileName);
-        ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
+        ui->statusBar->showMessage("Reading from CBM: "+file.baseName()+"."+file.completeSuffix()+"...");
         d64imageFile = file.baseName()+"."+file.completeSuffix();
 
-        proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName), QIODevice::ReadWrite | QIODevice::Text);
+        proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << params << QString::number(deviceid) << QDir::toNativeSeparators(fileName), QIODevice::ReadWrite | QIODevice::Text);
+
         if (!proc_d64copy->waitForStarted())
         {
             QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
@@ -1297,15 +1360,15 @@ void FileWindow::on_CBMRename_clicked()
     if (cbmFilename.isEmpty())
         return;
 
-    QString newFilename = QInputDialog::getText(this, "QtCBM", "New filename:", QLineEdit::Normal, "", &ok);
-    if (ok && confirmExecute(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "R0:"+cbmFilename+"="+newFilename))
+    QString newFilename = QInputDialog::getText(this, "QtCBM", "New filename:", QLineEdit::Normal, "", &ok).toUpper();
+    if (ok && confirmExecute(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "R0:"+newFilename+"="+cbmFilename))
     {
         progbar = new QProgressBar(this);
         progbar->setMinimum(0);
         progbar->setMaximum(0);
         ui->statusBar->addPermanentWidget(progbar);
 
-        proc_cbmRename->start(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "R0:"+cbmFilename+"="+newFilename);
+        proc_cbmRename->start(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "R0:"+newFilename+"="+cbmFilename);
         if (!proc_cbmRename->waitForStarted())
         {
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmRename->exitCode()), QMessageBox::Ok, QMessageBox::Ok);

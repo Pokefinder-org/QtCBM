@@ -145,13 +145,24 @@ private:
     QString d64imageFile;
     QString fileFromArgs;
     QString cbmFileName;
+    QString tracks;
+    QString moretracks;
+    QString appenderrormap;
 
     // other variables
     bool showcmd;
     bool autorefresh;
     bool cbmctrlhasraw;
     bool generateRandomDiskname;
+    bool formatVerify;
+    bool formatExtended;
+    bool formatNobump;
+    bool formatOriginal;
+    bool appendmap;
     int deviceid;
+    bool usetracks;
+    int starttrack;
+    int endtrack;
     int lastBlock;
     int currBlock;
 };

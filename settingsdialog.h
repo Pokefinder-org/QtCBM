@@ -31,6 +31,10 @@ private slots:
 
     void on_cbmctrl_reset_clicked();
 
+    void on_usetracks_clicked();
+
+    void on_track_reset_clicked();
+
     void on_d64copy_reset_clicked();
 
     void on_cbmcopy_reset_clicked();
@@ -44,6 +48,7 @@ private:
     QSettings *settings;
     QString getTransferMode();
     QString getCableType();
+
 };
 
 #endif // SETTINGSDIALOG_H

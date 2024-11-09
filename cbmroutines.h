@@ -14,6 +14,7 @@ public:
     static QString stringToPETSCII(QByteArray pS, bool keepSpecialChars, bool cbmctrlhasraw);
     static QString PETSCIItoString(QString text);
     static QString randomString(const int len);
+    static QString randomFullString(const int len);
     static QString formatFileSize(qint64 size);
     static char cbm_petscii2ascii_c(char c);
     static char * cbm_petscii2ascii(char *Str);
