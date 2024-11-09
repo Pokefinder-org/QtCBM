@@ -11,7 +11,7 @@ This fork is based on: https://github.com/mveinot/QtCBM
 
 QtCBM depends on:
 
-* https://github.com/qtproject/qt-solutions/tree/master/qtsingleapplication
+* https://github.com/qtproject/qt-solutions
 
 and of course
 
@@ -20,9 +20,10 @@ and of course
 
 Building (under Linux - Debian 12.7 here)
 
+* git clone https://github.com/qtproject/qt-solutions.git
+* cd qt-solutions/qtsingleapplication && qmake && make
 * git clone this repository
-* cd QtCBM/diskimage && cp Makefile.unix Makefile
-* make
+* cd QtCBM/diskimage && cp Makefile.unix Makefile && make
 * cd ..
 * qmake -makefile QtCBM.pro
 * make
