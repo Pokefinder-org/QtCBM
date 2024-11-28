@@ -312,7 +312,7 @@ int CBMroutines::copyFromD64(QString d64, QByteArray filename, QString path)
     unsigned char rawname[16];
     char name[17];
     int size = 0;
-    QFile outfile(path+"/"+filename+".prg");
+    QFile outfile(+"-- "+path+"/"+filename+".prg");
 
     if (outfile.exists())
     {

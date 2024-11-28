@@ -27,7 +27,8 @@ private slots:
     void on_browse_d64copy_clicked();
     void on_buttonBox_accepted();
     void on_browse_cbmcopy_clicked();
-    void on_browse_morse_clicked();
+    void on_browse_nibread_clicked();
+    void on_browse_nibwrite_clicked();
 
     void on_cbmctrl_reset_clicked();
 
@@ -35,13 +36,17 @@ private slots:
 
     void on_track_reset_clicked();
 
+    void on_reset_errors_clicked();
+
     void on_d64copy_reset_clicked();
 
     void on_cbmcopy_reset_clicked();
 
     void on_cbmforng_reset_clicked();
 
-    void on_morse_reset_clicked();
+    void on_nibread_reset_clicked();
+
+    void on_nibwrite_reset_clicked();
 
 private:
     Ui::settingsDialog *ui;

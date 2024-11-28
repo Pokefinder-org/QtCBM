@@ -299,16 +299,16 @@
             <number>10</number>
            </property>
            <item row="3" column="0">
-            <widget class="QToolButton" name="copyCBMfileToDisk">
+            <widget class="QToolButton" name="copyNibwrite">
              <property name="toolTip">
-              <string>Copy file(s) to disk</string>
+              <string>Write nibwrite image to disk</string>
              </property>
              <property name="text">
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="QtCBM.qrc">
-               <normaloff>:/res/icons/file-right.png</normaloff>:/res/icons/file-right.png</iconset>
+              <iconset>
+               <normaloff>res/icons/ndisk-right.png</normaloff>res/icons/ndisk-right.png</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -330,6 +330,26 @@
               </size>
              </property>
             </spacer>
+           </item>
+           <item row="5" column="0">
+            <widget class="QToolButton" name="copyCBMfileToDisk">
+             <property name="toolTip">
+              <string>Copy file(s) to disk</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+             <property name="icon">
+              <iconset resource="QtCBM.qrc">
+               <normaloff>:/res/icons/file-right.png</normaloff>:/res/icons/file-right.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>30</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
            </item>
            <item row="2" column="0">
             <widget class="QToolButton" name="copyFromCBM">
@@ -365,19 +385,6 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="0">
-            <spacer name="verticalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
            <item row="1" column="0">
             <widget class="QToolButton" name="copyToCBM">
              <property name="font">
@@ -409,7 +416,7 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
+           <item row="6" column="0">
             <widget class="QToolButton" name="copyFileFromCBMdisk">
              <property name="toolTip">
               <string>Copy file from disk</string>
@@ -420,6 +427,39 @@
              <property name="icon">
               <iconset resource="QtCBM.qrc">
                <normaloff>:/res/icons/file-left.png</normaloff>:/res/icons/file-left.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>30</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0">
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="4" column="0">
+            <widget class="QToolButton" name="copyNibread">
+             <property name="toolTip">
+              <string>Create nibread image from disk</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+             <property name="icon">
+              <iconset>
+               <normaloff>res/icons/ndisk-left.png</normaloff>res/icons/ndisk-left.png</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -550,7 +590,6 @@
                        <property name="font">
                         <font>
                          <family>Courier</family>
-                         <weight>75</weight>
                          <bold>true</bold>
                          <kerning>false</kerning>
                         </font>
@@ -580,7 +619,6 @@
                        <property name="font">
                         <font>
                          <family>Courier</family>
-                         <weight>75</weight>
                          <bold>true</bold>
                          <kerning>false</kerning>
                         </font>
@@ -604,7 +642,6 @@
                    <font>
                     <family>Courier</family>
                     <pointsize>11</pointsize>
-                    <weight>75</weight>
                     <bold>true</bold>
                     <kerning>false</kerning>
                    </font>
@@ -628,7 +665,7 @@
                    <bool>false</bool>
                   </property>
                   <property name="columnCount">
-                   <number>5</number>
+                   <number>4</number>
                   </property>
                   <attribute name="headerDefaultSectionSize">
                    <number>65</number>
@@ -656,11 +693,6 @@
                     <string>Size</string>
                    </property>
                   </column>
-                  <column>
-                   <property name="text">
-                    <string notr="true">5</string>
-                   </property>
-                  </column>
                  </widget>
                 </item>
                 <item>
@@ -674,7 +706,6 @@
                   <property name="font">
                    <font>
                     <family>Courier</family>
-                    <weight>75</weight>
                     <bold>true</bold>
                     <kerning>false</kerning>
                    </font>
@@ -864,7 +895,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuEdit">
@@ -887,7 +918,6 @@
      <string>Tools</string>
     </property>
     <addaction name="actionDetect_Drive"/>
-    <addaction name="actionMorse_Code"/>
     <addaction name="actionReset_Bus"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -932,14 +962,6 @@
    </property>
    <property name="text">
     <string>Detect Drive</string>
-   </property>
-  </action>
-  <action name="actionMorse_Code">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Morse Code</string>
    </property>
   </action>
   <action name="actionReset_Bus">

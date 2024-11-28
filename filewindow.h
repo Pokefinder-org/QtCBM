@@ -42,6 +42,7 @@ public:
     //QString stringToPETSCII(QString);
     void writeD64FromArgs(QString);
     void copyToCBM(QStringList list);
+    void copyNibwrite(QStringList list);
     void writeCBMconf();
     void disableUIElements();
     void enableUIElements();
@@ -57,6 +58,7 @@ public:
 private slots:
     void loadSettings();
     void stopCopy();
+    void stopNibwrite();
     void timerClick();
 
     void act_newFolder();
@@ -69,7 +71,9 @@ private slots:
 
     void cbmStatusFinished(int,QProcess::ExitStatus);
     void cbmCopyProgress();
+    void cbmNibwriteProgress();
     void cbmCopyFinished(int,QProcess::ExitStatus);
+    void cbmNibwriteFinished(int,QProcess::ExitStatus);
     void cbmDirFinished(int, QProcess::ExitStatus);
     void cbmResetFinished(int, QProcess::ExitStatus);
     void cbmFormatFinished(int, QProcess::ExitStatus);
@@ -78,7 +82,7 @@ private slots:
     void cbmScratchFinished(int ,QProcess::ExitStatus);
     void cbmRenameFinished(int ,QProcess::ExitStatus);
     void cbmDetectFinished(int, QProcess::ExitStatus);
-    void morseFinished(int, QProcess::ExitStatus);
+//    void morseFinished(int, QProcess::ExitStatus);
     void cbmFileCopyFinished(int, QProcess::ExitStatus);
 
     void localFiles_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
@@ -99,12 +103,16 @@ private slots:
     void on_CBMRename_clicked();
     void on_actionReset_Bus_triggered();
     void on_actionDetect_Drive_triggered();
-    void on_actionMorse_Code_triggered();
+//    void on_actionMorse_Code_triggered();
     void on_action_Quit_triggered();
 
     void on_copyCBMfileToDisk_clicked();
 
     void on_copyFileFromCBMdisk_clicked();
+
+    void on_copyNibwrite_clicked();
+
+//    void on_copyNibread_clicked();
 
 private:
 
@@ -122,6 +130,7 @@ private:
     // Process pointers
     QProcess *proc_cbmStatus;
     QProcess *proc_d64copy;
+    QProcess *proc_nibwrite;
     QProcess *proc_cbmDir;
     QProcess *proc_cbmReset;
     QProcess *proc_cbmFormat;
@@ -130,7 +139,7 @@ private:
     QProcess *proc_cbmScratch;
     QProcess *proc_cbmRename;
     QProcess *proc_cbmDetect;
-    QProcess *proc_morse;
+//    QProcess *proc_morse;
     QProcess *proc_cbmcopy;
 
     // strings
@@ -138,8 +147,9 @@ private:
     QString cbmctrl;
     QString cbmforng;
     QString d64copy;
+    QString nibwrite;
     QString cbmcopy;
-    QString morse;
+//    QString morse;
     QString transfermode;
     QString cableType;
     QString d64imageFile;
@@ -148,6 +158,7 @@ private:
     QString tracks;
     QString moretracks;
     QString appenderrormap;
+    QString output;
 
     // other variables
     bool showcmd;
@@ -159,8 +170,10 @@ private:
     bool formatNobump;
     bool formatOriginal;
     bool appendmap;
-    int deviceid;
+    bool parTransfer1571;
+    bool beVerbose;
     bool usetracks;
+    int deviceid;
     int starttrack;
     int endtrack;
     int lastBlock;

@@ -14,12 +14,27 @@ settingsDialog::settingsDialog(QWidget *parent) :
     ui->cableFrame->setEnabled(true);
 #endif
 
+//    QAction *actUseTracks;
+
+    connect(ui->input_usetracks, &QAbstractButton::toggled, this, &settingsDialog::on_usetracks_clicked);
+
+    // Create our context menu items
+
     settings = new QSettings("mvgrafx", "QtCBM");
     ui->input_cbmctrl->setText(settings->value("tools/cbmctrl", findCBMUtil("cbmctrl")).toString());
     ui->input_cbmforng->setText(settings->value("tools/cbmforng", findCBMUtil("cbmforng")).toString());
     ui->input_d64copy->setText(settings->value("tools/d64copy", findCBMUtil("d64copy")).toString());
     ui->input_cbmcopy->setText(settings->value("tools/cbmcopy", findCBMUtil("cbmcopy")).toString());
-    ui->input_morse->setText(settings->value("tools/morse", findCBMUtil("morse")).toString());
+    ui->input_nibread->setText(settings->value("tools/nibread", findCBMUtil("nibread")).toString());
+    ui->input_nibwrite->setText(settings->value("tools/nibwrite", findCBMUtil("nibwrite")).toString());
+    ui->noKillertracks->setChecked(settings->value("noKillertracks", false).toBool());
+    ui->parTransfer1571->setChecked(settings->value("parTransfer1571", false).toBool());
+    ui->beVerbose->setChecked(settings->value("beVerbose", false).toBool());
+    ui->readRetry->setChecked(settings->value("readRetry", false).toBool());
+    ui->input_errors->setValue(settings->value("retryErrors", 5).toInt());
+    ui->defaultDensities->setChecked(settings->value("defaultDensities", false).toBool());
+    ui->readHalftracks->setChecked(settings->value("readHalftracks", false).toBool());
+    ui->input_starttrack->setValue(settings->value("starttrack", 1).toInt());
     ui->input_cbmdevice->setValue(settings->value("deviceid", 8).toInt());
     ui->input_usetracks->setChecked(settings->value("usetracks", false).toBool());
     ui->input_starttrack->setValue(settings->value("starttrack", 1).toInt());
@@ -57,6 +72,7 @@ settingsDialog::settingsDialog(QWidget *parent) :
         ui->cableXU->setChecked(true);
     if (cableType == "xum1541")
         ui->cableXUM->setChecked(true);
+
 }
 
 settingsDialog::~settingsDialog()
@@ -79,27 +95,32 @@ QString settingsDialog::findCBMUtil(QString name)
 
 void settingsDialog::on_browse_cbmctrl_clicked()
 {
-    ui->input_cbmctrl->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find cbmctrl.exe"), "/", tr("Executable Files (*.exe)"))));
+    ui->input_cbmctrl->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find cbmctrl"), "/", tr("Executable Files (*)"))));
 }
 
 void settingsDialog::on_browse_cbmforng_clicked()
 {
-    ui->input_cbmforng->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find cbmforng.exe"), "/", tr("Executable Files (*.exe)"))));
+    ui->input_cbmforng->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find cbmforng"), "/", tr("Executable Files (*)"))));
 }
 
 void settingsDialog::on_browse_d64copy_clicked()
 {
-    ui->input_d64copy->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find d64copy.exe"), "/", tr("Executable Files (*.exe)"))));
+    ui->input_d64copy->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find d64copy"), "/", tr("Executable Files (*)"))));
 }
 
 void settingsDialog::on_browse_cbmcopy_clicked()
 {
-    ui->input_cbmcopy->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find cbmcopy.exe"), "/", tr("Executable Files (*.exe)"))));
+    ui->input_cbmcopy->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find cbmcopy"), "/", tr("Executable Files (*)"))));
 }
 
-void settingsDialog::on_browse_morse_clicked()
+void settingsDialog::on_browse_nibread_clicked()
 {
-    ui->input_morse->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find morse.exe"), "/", tr("Executable Files (*.exe)"))));
+    ui->input_nibread->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find nibread"), "/", tr("Executable Files (*)"))));
+}
+
+void settingsDialog::on_browse_nibwrite_clicked()
+{
+    ui->input_nibwrite->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find nibwrite"), "/", tr("Executable Files (*)"))));
 }
 
 void settingsDialog::on_buttonBox_accepted()
@@ -108,7 +129,15 @@ void settingsDialog::on_buttonBox_accepted()
     settings->setValue("tools/cbmforng", ui->input_cbmforng->text());
     settings->setValue("tools/d64copy", ui->input_d64copy->text());
     settings->setValue("tools/cbmcopy", ui->input_cbmcopy->text());
-    settings->setValue("tools/morse", ui->input_morse->text());
+    settings->setValue("tools/nibread", ui->input_nibread->text());
+    settings->setValue("tools/nibwrite", ui->input_nibwrite->text());
+    settings->setValue("parTransfer1571", ui->parTransfer1571->isChecked());
+    settings->setValue("beVerbose", ui->beVerbose->isChecked());
+    settings->setValue("readRetry", ui->readRetry->isChecked());
+    settings->setValue("retryErrors", ui->input_errors->value());
+    settings->setValue("noKillertracks", ui->noKillertracks->isChecked());
+    settings->setValue("defaultDensities", ui->defaultDensities->isChecked());
+    settings->setValue("readHalftracks", ui->readHalftracks->isChecked());
     settings->setValue("deviceid", ui->input_cbmdevice->value());
     settings->setValue("usetracks", ui->input_usetracks->isChecked());
     settings->setValue("starttrack", ui->input_starttrack->value());
@@ -174,8 +203,10 @@ void settingsDialog::on_track_reset_clicked()
     ui->input_endtrack->setValue(35);
 }
 
-
-
+void settingsDialog::on_reset_errors_clicked()
+{
+    ui->input_errors->setValue(5);
+}
 
 void settingsDialog::on_d64copy_reset_clicked()
 {
@@ -192,7 +223,12 @@ void settingsDialog::on_cbmforng_reset_clicked()
     ui->input_cbmforng->setText(findCBMUtil("cbmforng"));
 }
 
-void settingsDialog::on_morse_reset_clicked()
+void settingsDialog::on_nibread_reset_clicked()
 {
-    ui->input_morse->setText(findCBMUtil("morse"));
+    ui->input_nibread->setText(findCBMUtil("nibread"));
+}
+
+void settingsDialog::on_nibwrite_reset_clicked()
+{
+    ui->input_nibwrite->setText(findCBMUtil("nibwrite"));
 }
