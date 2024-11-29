@@ -59,6 +59,10 @@ FileWindow::FileWindow(QWidget *parent) :
     connect(proc_nibwrite, SIGNAL(readyReadStandardOutput()), this, SLOT(cbmNibwriteProgress()));
     connect(proc_nibwrite, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmNibwriteFinished(int,QProcess::ExitStatus)));
 
+    proc_nibread = new QProcess(this);
+    connect(proc_nibread, SIGNAL(readyReadStandardOutput()), this, SLOT(cbmNibreadProgress()));
+    connect(proc_nibread, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmNibreadFinished(int,QProcess::ExitStatus)));
+
     proc_cbmDir = new QProcess(this);
     connect(proc_cbmDir, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmDirFinished(int,QProcess::ExitStatus)));
 
@@ -252,11 +256,13 @@ bool FileWindow::confirmExecute(QString command, QStringList params)
     return true;
 }
 
+// handles a d64 passed on the commandline
 void FileWindow::writeD64FromArgs(QString filename)
 {
     fileFromArgs = filename;
     on_copyToCBM_clicked();
 }
+
 
 void FileWindow::writeCBMconf()
 {
@@ -306,6 +312,7 @@ void FileWindow::loadSettings()
     cbmforng = settings->value("tools/cbmforng", settingsDialog::findCBMUtil("cbmforng")).toString();
     d64copy = settings->value("tools/d64copy", settingsDialog::findCBMUtil("d64copy")).toString();
     nibwrite = settings->value("tools/nibwrite", settingsDialog::findCBMUtil("nibwrite")).toString();
+    nibread = settings->value("tools/nibread", settingsDialog::findCBMUtil("nibread")).toString();
     cbmcopy = settings->value("tools/cbmcopy", settingsDialog::findCBMUtil("cbmcopy")).toString();
 //    morse = settings->value("tools/morse", settingsDialog::findCBMUtil("morse")).toString();
     parTransfer1571 = settings->value("parTransfer1571", false).toBool();
@@ -315,6 +322,12 @@ void FileWindow::loadSettings()
     usetracks = settings->value("usetracks", false).toBool();
     starttrack = settings->value("starttrack", 1).toInt();
     endtrack = settings->value("endtrack", 35).toInt();
+    readRetry = settings->value("readRetry", false).toBool();
+    retryErrors = settings->value("retryErrors", 5).toInt();
+    noKillertracks = settings->value("noKillertracks", false).toBool();
+    defaultDensities = settings->value("defaultDensities", false).toBool();
+    readHalftracks = settings->value("readHalftracks", false).toBool();
+    trackMatching = settings->value("trackMatching", false).toBool();
     showcmd = settings->value("showcmd", false).toBool();
     autorefresh = settings->value("autorefresh", true).toBool();
     generateRandomDiskname = settings->value("genrandomdisk", false).toBool();
@@ -688,11 +701,9 @@ void FileWindow::copyToCBM(QStringList list)
     }
 }
 
-
+/*
 void FileWindow::copyNibwrite(QStringList list)
 {
-
-
 
 
     if (confirmExecute(nibwrite, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << list))
@@ -719,7 +730,7 @@ void FileWindow::copyNibwrite(QStringList list)
         }
     }
 }
-
+*/
 
 void FileWindow::on_copyCBMfileToDisk_clicked()
 {
@@ -741,7 +752,7 @@ void FileWindow::on_copyCBMfileToDisk_clicked()
                 //qDebug() << model->filePath(index.at(i));
                 fileList << QDir::toNativeSeparators(model->filePath(index.at(i)));
             }
-            copyNibwrite(fileList);
+            copyToCBM(fileList);
 
             return;
         }
@@ -819,7 +830,7 @@ void FileWindow::on_copyToCBM_clicked()
             ui->statusBar->addPermanentWidget(btn_abort);
             timer = new QTimer(this);
             timer->setInterval(10000);
-            connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
+            connect(timer, SIGNAL(timeout()), this, SLOT(timerClick("writing")));
             ui->copyToCBM->setEnabled(false);
             QFileInfo file(fileToCopy);
             ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix());
@@ -875,7 +886,7 @@ void FileWindow::on_copyToCBM_clicked()
     }
 }
 
-void FileWindow::timerClick()
+void FileWindow::timerClick(QString rwstate)
 {
     if (currBlock > lastBlock)
     {
@@ -883,7 +894,7 @@ void FileWindow::timerClick()
     } else
     {
         timer->stop();
-        if (QMessageBox::critical(this, "QtCBM", "Trouble writing "+d64imageFile+"\n\nAbort?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
+        if (QMessageBox::critical(this, "QtCBM", "Trouble "+rwstate+" "+d64imageFile+"\n\nAbort?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
         {
             stopCopy();
         } else {
@@ -962,6 +973,11 @@ void FileWindow::on_copyNibwrite_clicked()
         params << "-P";
     }
 
+    if (readRetry)
+    {
+        params << "-P";
+    }
+
     if (beVerbose)
     {
         params << "-v";
@@ -987,7 +1003,7 @@ void FileWindow::on_copyNibwrite_clicked()
             ui->statusBar->addPermanentWidget(btn_abort);
             timer = new QTimer(this);
             timer->setInterval(30000);
-            connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
+            connect(timer, SIGNAL(timeout()), this, SLOT(timerClick("writing")));
 
             ui->copyNibwrite->setEnabled(false);
             QFileInfo file(fileToCopy);
@@ -1016,6 +1032,103 @@ void FileWindow::on_copyNibwrite_clicked()
     }
 }
 
+
+void FileWindow::on_copyNibread_clicked()
+{
+//    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), QDir::rootPath(), tr("Disk Images (*.d64)"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), selectedLocalFolder , tr("NIB/NB2/NBZ Images (*.nib *.nb2 *.nbz)"));
+
+    tracks="";
+    moretracks="";
+    QStringList params;
+
+    params << "-D" + QString::number(deviceid);
+
+    if (usetracks)
+    {
+        tracks = "-S"+QString::number(starttrack);
+        moretracks =  "-E"+QString::number(endtrack);
+        params << tracks << moretracks;
+    }
+
+    if (readRetry)
+    {
+        params << "-e"+QString::number(retryErrors);
+    }
+
+    if (parTransfer1571)
+    {
+        params << "-P";
+    }
+
+    if (noKillertracks)
+    {
+        params << "-k";
+    }
+
+    if (defaultDensities)
+    {
+        params << "-d";
+    }
+
+    if (readHalftracks)
+    {
+        params << "-h";
+    }
+
+    if (trackMatching)
+    {
+        params << "-v";
+    }
+
+    if (beVerbose)
+    {
+        params << "-V";
+    }
+
+    qDebug() << "nibread params:" << params;
+
+    if (!fileName.isEmpty() && confirmExecute(nibread, QStringList() << params << QDir::toNativeSeparators(fileName)))
+    {
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(100);
+        progbar->setTextVisible(true);
+        btn_abort = new QPushButton(this);
+        connect(btn_abort, SIGNAL(clicked()), this, SLOT(stopCopy()));
+        btn_abort->setText("X");
+        btn_abort->setToolTip("Abort the current transfer and reset the CBM bus");
+        btn_abort->setFixedHeight(18);
+        btn_abort->setFixedWidth(18);
+        ui->statusBar->addPermanentWidget(progbar);
+        ui->statusBar->addPermanentWidget(btn_abort);
+        timer = new QTimer(this);
+        timer->setInterval(30000);
+        connect(timer, SIGNAL(timeout()), this, SLOT(timerClick("reading")));
+        ui->copyNibread->setEnabled(false);
+        QFileInfo file(fileName);
+        ui->statusBar->showMessage("Reading from CBM: "+file.baseName()+"."+file.completeSuffix());
+        d64imageFile = file.baseName()+"."+file.completeSuffix();
+
+        proc_nibread->start(nibread, QStringList() << params << QDir::toNativeSeparators(fileName), QIODevice::ReadWrite | QIODevice::Text);
+
+        if (!proc_nibread->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+nibread+"\n\nExit status: "+QString::number(proc_nibread->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            ui->statusBar->removeWidget(btn_abort);
+            delete progbar;
+            delete btn_abort;
+        } else
+        {
+            timer->start();
+            disableUIElements();
+            currBlock = 0;
+            lastBlock = 0;
+        }
+    }
+}
+
 void FileWindow::stopCopy()
 {
     timer->stop();
@@ -1030,6 +1143,14 @@ void FileWindow::stopNibwrite()
     proc_nibwrite->kill(); // this will call cbmNibwriteFinished(), so we don't need to manually
     ui->copyNibwrite->setEnabled(true);
     QMessageBox::information(this, "Nibwrite Copy Aborted", "The copy operation was terminated", QMessageBox::Ok, QMessageBox::Ok);
+}
+
+void FileWindow::stopNibread()
+{
+    timer->stop();
+    proc_nibread->kill(); // this will call cbmNibreadFinished(), so we don't need to manually
+    ui->copyNibread->setEnabled(true);
+    QMessageBox::information(this, "Nibread Copy Aborted", "The copy operation was terminated", QMessageBox::Ok, QMessageBox::Ok);
 }
 
 void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
@@ -1071,7 +1192,6 @@ void FileWindow::cbmNibwriteFinished(int x, QProcess::ExitStatus status)
     dlg->setDetailText(output);
     dlg->exec();
 
-
     (void)x;
     (void)status;
 
@@ -1093,6 +1213,40 @@ void FileWindow::cbmNibwriteFinished(int x, QProcess::ExitStatus status)
     }
 }
 
+void FileWindow::cbmNibreadFinished(int x, QProcess::ExitStatus status)
+{
+
+    timer->stop();
+    enableUIElements();
+    qDebug() << "Process terminated with exit code: "+QString::number(x)+" and exit status: "+QString::number(status);
+
+    QString output = proc_nibread->readAllStandardOutput();
+    detailsInfoDialog *dlg = new detailsInfoDialog(this);
+    dlg->setText("The nibread command produced the following output:");
+    dlg->setDetailText(output);
+    dlg->exec();
+
+
+    (void)x;
+    (void)status;
+
+    ui->statusBar->removeWidget(btn_abort);
+    ui->statusBar->removeWidget(progbar);
+    delete btn_abort;
+    delete progbar;
+    ui->copyNibread->setEnabled(true);
+    if (status == QProcess::NormalExit && autorefresh)
+    {
+        on_CBMDirectory_clicked();
+    } else if (status == QProcess::CrashExit)
+    {
+        ui->statusBar->clearMessage();
+#ifdef Q_OS_WIN
+        Sleep(2);
+#endif
+        on_actionReset_Bus_triggered();
+    }
+}
 
 void FileWindow::cbmCopyProgress()
 {
@@ -1131,8 +1285,9 @@ void FileWindow::cbmNibwriteProgress()
     qDebug() << "BIN DA! ";
     QString output = proc_nibwrite->readAllStandardOutput();
     //QRegExp rx("\\s?(\\d+).(\\d):\\s*([\\*\\.\\-\\?]+).*");
-    QRegExp rx("\\s?(\\d+).(\\d+):\\s*\(\\d+:\\d+\\) WRITE$");
+    QRegExp rx("\\s?(\\d+).(\\d+):\\s*\(\\d+:\\d+\\)\\s*WRITE.*");
     //QRegExp rx("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
+    //QRegExp rxTrackChange("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*");
     QRegExp rxTrackChange("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*");
     //QRegExp rxDone(".*(\\d+ blocks copied)\\.");
     if (rx.indexIn(output) >= 0)
@@ -1164,6 +1319,45 @@ void FileWindow::cbmNibwriteProgress()
     */
 }
 
+void FileWindow::cbmNibreadProgress()
+{
+    qDebug() << "BIN DA! ";
+    //QString output = proc_nibread->readAllStandardOutput();
+    QString output = "";
+    //QRegExp rx("\\s?(\\d+).(\\d):\\s*([\\*\\.\\-\\?]+).*");
+    QRegExp rx("\\s?(\\d+).(\\d+):\\s*\(\\d+:\\d+\\)\\s*WRITE.*");
+    //QRegExp rx("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
+    //QRegExp rxTrackChange("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*");
+    QRegExp rxTrackChange("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*");
+    //QRegExp rxDone(".*(\\d+ blocks copied)\\.");
+    if (rx.indexIn(output) >= 0)
+    {
+        progbar->setValue(rx.cap(1).toInt());
+        qDebug() << "test: " << rx.cap(1);
+        //currBlock = rx.cap(4).toInt();
+
+#ifdef Q_OS_LINUX
+        progbar->setFormat("Track: "+rx.cap(1));
+#endif
+#ifdef Q_OS_WIN
+        progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(4)+"/"+rx.cap(5));
+#endif
+#ifdef Q_OS_MAC
+        ui->statusBar->showMessage("Track: "+rx.cap(1)+", Block: "+rx.cap(4)+"/"+rx.cap(5));
+#endif
+    } else if (rxTrackChange.indexIn(output) >= 0)
+    {
+        qDebug() << "Next track detected";
+    }
+
+    qDebug() << "hm: " << output;
+
+    /* else if (rxDone.indexIn(output) >= 0)
+    {
+        ui->statusBar->showMessage(rxDone.cap(1));
+    }
+    */
+}
 
 void FileWindow::cbmResetFinished(int,QProcess::ExitStatus)
 {
@@ -1569,7 +1763,7 @@ void FileWindow::on_copyFromCBM_clicked()
         ui->statusBar->addPermanentWidget(btn_abort);
         timer = new QTimer(this);
         timer->setInterval(10000);
-        connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
+        connect(timer, SIGNAL(timeout()), this, SLOT(timerClick("reading")));
         ui->copyToCBM->setEnabled(false);
         QFileInfo file(fileName);
         ui->statusBar->showMessage("Reading from CBM: "+file.baseName()+"."+file.completeSuffix());

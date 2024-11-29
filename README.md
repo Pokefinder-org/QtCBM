@@ -45,11 +45,11 @@ Recently fixed/changed:
 * MORSE removed
 * Directory parsing improved to handle header and id better (e.g. 5 byte IDs and headers with spacings). Added Status display on directory reading to display read errors.
 * added "--" option to cbmcopy commands before filenames as e.g. "- sumthg! file -" errors out otherwise on cbmcopy
-* nibwrite support mostly done
+* nibwrite/nibread support added (most options - for special nibwrites revert to cmdline)
 
 TODO:
 
-* finalise retry-count option nibwrite/read
+* Fix nibread/nibwrite progress bar
 * filename with "dir art" cannot easily be copied. Take the "scratch" filename option over to here?
 * formatng doesnt work with "- diskname -" and the "--" option seems to be missing. Issue raised: https://github.com/OpenCBM/OpenCBM/issues/121
 * CBMroutines::stringToPETSCII could use a major overhaul but I definately dont feel like it
@@ -57,4 +57,4 @@ TODO:
 
 Thanx:
 
-* McMarty of the vice-dev team for helping me out on qt issues :)
+* McMartin of the vice-dev team for helping me out on qt issues :)

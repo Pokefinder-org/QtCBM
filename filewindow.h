@@ -43,6 +43,7 @@ public:
     void writeD64FromArgs(QString);
     void copyToCBM(QStringList list);
     void copyNibwrite(QStringList list);
+    void copyNibread(QStringList list);
     void writeCBMconf();
     void disableUIElements();
     void enableUIElements();
@@ -59,7 +60,8 @@ private slots:
     void loadSettings();
     void stopCopy();
     void stopNibwrite();
-    void timerClick();
+    void stopNibread();
+    void timerClick(QString);
 
     void act_newFolder();
     void act_renameFile();
@@ -72,8 +74,10 @@ private slots:
     void cbmStatusFinished(int,QProcess::ExitStatus);
     void cbmCopyProgress();
     void cbmNibwriteProgress();
+    void cbmNibreadProgress();
     void cbmCopyFinished(int,QProcess::ExitStatus);
     void cbmNibwriteFinished(int,QProcess::ExitStatus);
+    void cbmNibreadFinished(int,QProcess::ExitStatus);
     void cbmDirFinished(int, QProcess::ExitStatus);
     void cbmResetFinished(int, QProcess::ExitStatus);
     void cbmFormatFinished(int, QProcess::ExitStatus);
@@ -111,8 +115,7 @@ private slots:
     void on_copyFileFromCBMdisk_clicked();
 
     void on_copyNibwrite_clicked();
-
-//    void on_copyNibread_clicked();
+    void on_copyNibread_clicked();
 
 private:
 
@@ -131,6 +134,7 @@ private:
     QProcess *proc_cbmStatus;
     QProcess *proc_d64copy;
     QProcess *proc_nibwrite;
+    QProcess *proc_nibread;
     QProcess *proc_cbmDir;
     QProcess *proc_cbmReset;
     QProcess *proc_cbmFormat;
@@ -148,6 +152,7 @@ private:
     QString cbmforng;
     QString d64copy;
     QString nibwrite;
+    QString nibread;
     QString cbmcopy;
 //    QString morse;
     QString transfermode;
@@ -159,6 +164,7 @@ private:
     QString moretracks;
     QString appenderrormap;
     QString output;
+    QString rwstate;
 
     // other variables
     bool showcmd;
@@ -173,9 +179,15 @@ private:
     bool parTransfer1571;
     bool beVerbose;
     bool usetracks;
+    bool readRetry;
+    bool noKillertracks;
+    bool defaultDensities;
+    bool readHalftracks;
+    bool trackMatching;
     int deviceid;
     int starttrack;
     int endtrack;
+    int retryErrors;
     int lastBlock;
     int currBlock;
 };
