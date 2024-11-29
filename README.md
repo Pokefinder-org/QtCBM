@@ -18,13 +18,12 @@ and of course
 * https://github.com/OpenCBM/OpenCBM
 
 
-Building (under Linux - Debian 12.7 here)
+Building (under Linux - Debian 12.8 here)
 
 * git clone https://github.com/qtproject/qt-solutions.git
-* cd qt-solutions/qtsingleapplication && qmake && make
+* cd qt-solutions/qtsingleapplication && qmake && make && cd ../..
 * git clone this repository
-* cd QtCBM/diskimage && cp Makefile.unix Makefile && make
-* cd ..
+* cd QtCBM/diskimage && cp Makefile.unix Makefile && make && cd ..
 * qmake -makefile QtCBM.pro
 * make
 * ./QtCBM
