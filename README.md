@@ -49,6 +49,7 @@ Recently fixed/changed:
 TODO:
 
 * Fix nibread/nibwrite progress bar
+* Fix crash after trying to call "opencbm status" after validate and initialize (
 * filename with "dir art" cannot easily be copied. Take the "scratch" filename option over to here?
 * formatng doesnt work with "- diskname -" and the "--" option seems to be missing. Issue raised: https://github.com/OpenCBM/OpenCBM/issues/121
 * CBMroutines::stringToPETSCII could use a major overhaul but I definately dont feel like it

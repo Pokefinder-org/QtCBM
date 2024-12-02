@@ -454,7 +454,8 @@ void FileWindow::localFiles_selectionChanged(const QItemSelection &selected, con
     (void)deselected;
 
     qint64 size, blocks;
-    size = blocks = 0;
+    size = 0;
+    blocks = 0;
 
     QModelIndexList list = ui->localFiles->selectionModel()->selectedIndexes();
 
@@ -631,6 +632,26 @@ void FileWindow::on_CBMStatus_clicked()
     }
 }
 
+void FileWindow::just_CBMStatus()
+{
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(0);
+        ui->statusBar->addPermanentWidget(progbar);
+
+        proc_cbmStatus->start(cbmctrl, QStringList() << "status" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+        if (!proc_cbmStatus->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmStatus->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            delete progbar;
+        } else
+        {
+            disableUIElements();
+        }
+}
+
+
 void FileWindow::on_actionView_Drive_triggered()
 {
     foldersModel->setRootPath(QDir::rootPath());
@@ -700,37 +721,6 @@ void FileWindow::copyToCBM(QStringList list)
         }
     }
 }
-
-/*
-void FileWindow::copyNibwrite(QStringList list)
-{
-
-
-    if (confirmExecute(nibwrite, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << list))
-    {
-        progbar = new QProgressBar(this);
-        progbar->setMinimum(0);
-        progbar->setMaximum(0);
-        progbar->setTextVisible(true);
-        ui->statusBar->addPermanentWidget(progbar);
-        ui->copyToCBM->setEnabled(false);
-        ui->statusBar->showMessage("Writing file(s)");
-
-        proc_nibwrite->start(nibwrite, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << list, QIODevice::ReadWrite | QIODevice::Text);
-        if (!proc_cbmcopy->waitForStarted())
-        {
-            QMessageBox::warning(this,"Error", "Failed to execute "+nibwrite+"\n\nExit status: "+QString::number(proc_nibwrite->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
-            ui->statusBar->removeWidget(progbar);
-            ui->statusBar->removeWidget(btn_abort);
-            delete progbar;
-            delete btn_abort;
-        } else
-        {
-            disableUIElements();
-        }
-    }
-}
-*/
 
 void FileWindow::on_copyCBMfileToDisk_clicked()
 {
@@ -1384,9 +1374,11 @@ void FileWindow::cbmDetectFinished(int, QProcess::ExitStatus)
 
 void FileWindow::cbmInitFinished(int, QProcess::ExitStatus)
 {
+    on_CBMStatus_clicked();
+
     resetUI();
 
-    ui->statusBar->showMessage("Initialization complete");
+    ui->statusBar->showMessage("Initialising...");
 }
 
 /*
@@ -1398,9 +1390,14 @@ void FileWindow::morseFinished(int, QProcess::ExitStatus)
 
 void FileWindow::cbmValidateFinished(int, QProcess::ExitStatus)
 {
+    ui->statusBar->showMessage("Validating...");
+
+    // just_CBMStatus();
+
+    on_CBMStatus_clicked();
+
     resetUI();
 
-    ui->statusBar->showMessage("Validation complete");
 }
 
 void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
@@ -1549,7 +1546,7 @@ void FileWindow::on_CBMDirectory_clicked()
         ui->statusBar->addPermanentWidget(progbar);
 
         proc_cbmDir->start(cbmctrl, QStringList() << params, QIODevice::ReadWrite | QIODevice::Text);
-        qDebug() << "Executed:" << proc_cbmDir->program() << "with args:" << proc_cbmDir->arguments();
+//        qDebug() << "Executed:" << proc_cbmDir->program() << "with args:" << proc_cbmDir->arguments();
         if (!proc_cbmDir->waitForStarted())
         {
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDir->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
@@ -1589,7 +1586,7 @@ void FileWindow::on_CBMFormat_clicked()
     if (QMessageBox::question(this, "QtCBM", "This will erase ALL data on the floppy disk. Continue?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
     {
         diskLabel = QInputDialog::getText(this, "QtCBM", "Diskname,ID:", QLineEdit::Normal, diskLabel, &ok).toUpper();
-        qDebug() << "disklabel:" << "\"" << diskLabel << "\"";
+//        qDebug() << "disklabel:" << "\"" << diskLabel << "\"";
 //        QRegExp rx("[\\s\\S]+,[\\s\\S]+");
         QRegExp rx("[\\s\\S]+,[\\s\\S]+");
         if (ok)
@@ -1598,7 +1595,7 @@ void FileWindow::on_CBMFormat_clicked()
             {
                 if (confirmExecute(cbmforng, QStringList() << params << QString::number(deviceid) << diskLabel))
                 {
-                    qDebug() << "format flags:" << cbmforng << params << QString::number(deviceid) << diskLabel;
+                    qDebug() << "format cmd:" << cbmforng << params << QString::number(deviceid) << diskLabel;
 
                     progbar = new QProgressBar(this);
                     progbar->setMinimum(0);

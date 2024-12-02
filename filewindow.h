@@ -94,6 +94,7 @@ private slots:
     void on_localFiles_doubleClicked(const QModelIndex &index);
     void on_actionPreferences_triggered();
     void on_CBMStatus_clicked();
+    void just_CBMStatus();
     void on_actionView_Drive_triggered();
     void on_actionView_Home_Folder_triggered();
     void on_copyToCBM_clicked();
