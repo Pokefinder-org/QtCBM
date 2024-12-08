@@ -238,7 +238,6 @@ void FileWindow::resetUI()
     enableUIElements();
 }
 
-
 bool FileWindow::confirmExecute(QString command, QStringList params)
 {
     QFileInfo file(command);

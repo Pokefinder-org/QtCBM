@@ -8,6 +8,21 @@ It features a modern looking UI and a progress bar for copying disk images.
 
 This fork is based on: https://github.com/mveinot/QtCBM
 
+Similar projects are:
+
+(FIXME)!
+* http://cbmsteve.ca/cbmxfer/index.html ( https://github.com/sjgray/cbm-transfer )
+* https://commodore.software/images/jdownloads/screenshots/cbm-transfer-v1.22a-1.jpg
+* GUI4CBM v0.4.1
+
+
+Unlike above projects this fork is trying to just do disk operations and not add fancy unneeded things and add security and overview to transfer operations.
+Additionally the aim is to work multi-platform and support all often used options of the opencbm suite.
+
+** Releases
+
+* to be added
+
 
 QtCBM depends on:
 
@@ -44,7 +59,7 @@ Recently fixed/changed:
 * MORSE removed
 * Directory parsing improved to handle header and id better (e.g. 5 byte IDs and headers with spacings). Added Status display on directory reading to display read errors.
 * added "--" option to cbmcopy commands before filenames as e.g. "- sumthg! file -" errors out otherwise on cbmcopy
-* added read retry count to cbmcopy
+* added read retry count to d64copy
 * nibwrite/nibread support added (most options - for special nibwrites revert to cmdline)
 * error channel read after validate and initialize
 
@@ -56,6 +71,8 @@ TODO:
 * create builds for linux/mac/win on github
 * CBMroutines::stringToPETSCII could use a major overhaul but I definately dont feel like it
 * add imgcopy support whenever an appropriate drive or tester is found
+
+
 
 Thanx:
 
