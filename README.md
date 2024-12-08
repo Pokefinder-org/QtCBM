@@ -40,21 +40,23 @@ Recently fixed/changed:
 * More sane directory display (blocks, filename, type and THEN "size").
 * root filesystem default instead of homedir
 * option for error map added
-* Filerequester enhancement on transfer from CBM (more image types added)
+* Filerequester enhancement on transfer from CBM (d71 image type added)
 * MORSE removed
 * Directory parsing improved to handle header and id better (e.g. 5 byte IDs and headers with spacings). Added Status display on directory reading to display read errors.
 * added "--" option to cbmcopy commands before filenames as e.g. "- sumthg! file -" errors out otherwise on cbmcopy
+* added read retry count to cbmcopy
 * nibwrite/nibread support added (most options - for special nibwrites revert to cmdline)
+* error channel read after validate and initialize
 
 TODO:
 
-* Fix nibread/nibwrite progress bar
-* Fix crash after trying to call "opencbm status" after validate and initialize (
+* Fix nibread/nibwrite/cbmforng progress bar
 * filename with "dir art" cannot easily be copied. Take the "scratch" filename option over to here?
-* formatng doesnt work with "- diskname -" and the "--" option seems to be missing. Issue raised: https://github.com/OpenCBM/OpenCBM/issues/121
+* cbmforng doesnt work with "- diskname -" and the "--" option seems to be missing. Issue raised: https://github.com/OpenCBM/OpenCBM/issues/121
+* create builds for linux/mac/win on github
 * CBMroutines::stringToPETSCII could use a major overhaul but I definately dont feel like it
-
+* add imgcopy support whenever an appropriate drive or tester is found
 
 Thanx:
 
-* McMartin of the vice-dev team for helping me out on qt issues :)
+* McMartin and groepaz of the vice-dev team for helping me out on qt issues :)

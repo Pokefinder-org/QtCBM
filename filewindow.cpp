@@ -51,6 +51,9 @@ FileWindow::FileWindow(QWidget *parent) :
     proc_cbmStatus = new QProcess(this);
     connect(proc_cbmStatus, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(cbmStatusFinished(int,QProcess::ExitStatus)));
 
+    proc_just_CBMStatus = new QProcess(this);
+    connect(proc_just_CBMStatus, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(cbmJustStatusFinished(int,QProcess::ExitStatus)));
+
     proc_d64copy = new QProcess(this);
     connect(proc_d64copy, SIGNAL(readyReadStandardOutput()), this, SLOT(cbmCopyProgress()));
     connect(proc_d64copy, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmCopyFinished(int,QProcess::ExitStatus)));
@@ -228,7 +231,9 @@ void FileWindow::enableUIElements()
 void FileWindow::resetUI()
 {
     // remove the progress bar
-    ui->statusBar->removeWidget(progbar);
+    if (progbar)
+        ui->statusBar->removeWidget(progbar);
+
     delete progbar;
     enableUIElements();
 }
@@ -453,9 +458,9 @@ void FileWindow::localFiles_selectionChanged(const QItemSelection &selected, con
     (void)selected;
     (void)deselected;
 
-    qint64 size, blocks;
+    qint64 size, blocks=0;
     size = 0;
-    blocks = 0;
+    //blocks = 0;
 
     QModelIndexList list = ui->localFiles->selectionModel()->selectedIndexes();
 
@@ -493,7 +498,7 @@ void FileWindow::act_newFolder()
     }
 }
 
-void FileWindow::act_renameFile()
+QFile * FileWindow::act_renameFile()
 {
     bool ok;
 
@@ -522,7 +527,9 @@ void FileWindow::act_renameFile()
                 QMessageBox::warning(this,tr("Error"),tr("Could not rename file"), QMessageBox::Ok, QMessageBox::Ok);
             }
         }
+        return file;
     }
+    return NULL;
 }
 
 void FileWindow::act_deleteFile()
@@ -634,23 +641,35 @@ void FileWindow::on_CBMStatus_clicked()
 
 void FileWindow::just_CBMStatus()
 {
+
+    /*
         progbar = new QProgressBar(this);
         progbar->setMinimum(0);
         progbar->setMaximum(0);
         ui->statusBar->addPermanentWidget(progbar);
+*/
+        qDebug() << "BIN DA! ";
 
-        proc_cbmStatus->start(cbmctrl, QStringList() << "status" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
-        if (!proc_cbmStatus->waitForStarted())
+        proc_just_CBMStatus->start(cbmctrl, QStringList() << "status" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+        if (!proc_just_CBMStatus->waitForStarted())
         {
-            QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmStatus->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+            qDebug() << "BIN TOT! ";
+            QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_just_CBMStatus->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+
         } else
         {
             disableUIElements();
         }
 }
 
+void FileWindow::cbmJustStatusFinished(int, QProcess::ExitStatus)
+{
+    //resetUI();
+
+    ui->statusBar->showMessage("Drive status: "+proc_just_CBMStatus->readAllStandardOutput());
+}
 
 void FileWindow::on_actionView_Drive_triggered()
 {
@@ -1179,7 +1198,7 @@ void FileWindow::cbmNibwriteFinished(int x, QProcess::ExitStatus status)
     //QString output = proc_nibwrite->readAllStandardOutput();
     detailsInfoDialog *dlg = new detailsInfoDialog(this);
     dlg->setText("The nibwrite command produced the following output:");
-    dlg->setDetailText(output);
+    dlg->setDetailText(output2);
     dlg->exec();
 
     (void)x;
@@ -1205,15 +1224,14 @@ void FileWindow::cbmNibwriteFinished(int x, QProcess::ExitStatus status)
 
 void FileWindow::cbmNibreadFinished(int x, QProcess::ExitStatus status)
 {
-
     timer->stop();
     enableUIElements();
     qDebug() << "Process terminated with exit code: "+QString::number(x)+" and exit status: "+QString::number(status);
 
-    QString output = proc_nibread->readAllStandardOutput();
+    //QString output = proc_nibread->readAllStandardOutput();
     detailsInfoDialog *dlg = new detailsInfoDialog(this);
     dlg->setText("The nibread command produced the following output:");
-    dlg->setDetailText(output);
+    dlg->setDetailText(output2);
     dlg->exec();
 
 
@@ -1250,7 +1268,7 @@ void FileWindow::cbmCopyProgress()
         progbar->setValue(rx.cap(3).toInt());
         currBlock = rx.cap(4).toInt();
 
-        qDebug() << "currBlock" << currBlock;
+        // qDebug() << "currBlock" << currBlock;
 
 #ifdef Q_OS_LINUX
         progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(4)+"/"+rx.cap(5));
@@ -1274,6 +1292,7 @@ void FileWindow::cbmNibwriteProgress()
 {
     qDebug() << "BIN DA! ";
     QString output = proc_nibwrite->readAllStandardOutput();
+    output2 = output2+output;
     //QRegExp rx("\\s?(\\d+).(\\d):\\s*([\\*\\.\\-\\?]+).*");
     QRegExp rx("\\s?(\\d+).(\\d+):\\s*\(\\d+:\\d+\\)\\s*WRITE.*");
     //QRegExp rx("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
@@ -1312,8 +1331,9 @@ void FileWindow::cbmNibwriteProgress()
 void FileWindow::cbmNibreadProgress()
 {
     qDebug() << "BIN DA! ";
-    //QString output = proc_nibread->readAllStandardOutput();
-    QString output = "";
+    QString output = proc_nibread->readAllStandardOutput();
+    output2 = output2+output;
+    //QString output = "";
     //QRegExp rx("\\s?(\\d+).(\\d):\\s*([\\*\\.\\-\\?]+).*");
     QRegExp rx("\\s?(\\d+).(\\d+):\\s*\(\\d+:\\d+\\)\\s*WRITE.*");
     //QRegExp rx("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
@@ -1374,27 +1394,19 @@ void FileWindow::cbmDetectFinished(int, QProcess::ExitStatus)
 
 void FileWindow::cbmInitFinished(int, QProcess::ExitStatus)
 {
-    on_CBMStatus_clicked();
-
-    resetUI();
-
     ui->statusBar->showMessage("Initialising...");
-}
 
-/*
-void FileWindow::morseFinished(int, QProcess::ExitStatus)
-{
+    just_CBMStatus();
+
     resetUI();
+
 }
-*/
 
 void FileWindow::cbmValidateFinished(int, QProcess::ExitStatus)
 {
     ui->statusBar->showMessage("Validating...");
 
-    // just_CBMStatus();
-
-    on_CBMStatus_clicked();
+    just_CBMStatus();
 
     resetUI();
 
@@ -1416,10 +1428,6 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
 {
     resetUI();
 
-    // qDebug() << "returned from cbmdir. exit code:" << proc_cbmDir->exitCode();
-    // qDebug() << "exit status:" << proc_cbmDir->exitStatus();
-    // qDebug() << "error:" << proc_cbmDir->errorString();
-
     // clear the file list
     ui->cbmFiles->clear();
 
@@ -1435,9 +1443,6 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
     QRegExp rxDirEntry("(\\d+)\\s*.\"(.*)\"\\s+(\\S\\S\\S)");
     QRegExp rxFreeSpace("(\\d+)\\s\\S\\S\\S\\S\\S\\S\\s\\S\\S\\S\\S");
     QRegExp rxStatus("(\\d\\d),(.*),(\\d\\d),(\\d\\d)");
-    //QString regstring = CBMroutines::stringToPETSCII(dirlist.at(0), true, cbmctrlhasraw);
-        //qDebug() << rawname.data();
-        //qDebug() << "raw: " << regstring;
 
     // if directory starts with an error output:
     if (rxStatus.indexIn(QString(dirlist.at(0))) >= 0)
@@ -1493,13 +1498,6 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
             //qDebug() << "status: " << rxStatus.indexIn(QString(dirlist.at(i)));
             //qDebug() << "freesp: " << rxFreeSpace.indexIn(QString(dirlist.at(i)));
 
-//       else if (rxLabel.indexIn(QString(dirlist.at(i))) >= 0)
-//        {
-//            qDebug() << "label: " << dirlist.at(i);
-//            ui->diskLabel->setText(CBMroutines::stringToPETSCII(rxLabel.cap(2).trimmed(), cbmctrlhasraw));
-//            ui->diskId->setText(CBMroutines::stringToPETSCII(rxLabel.cap(3).trimmed(), cbmctrlhasraw));
-//        }
-//
             } // less than 3 entries means we have an "empty" disk - just blocks free
         } else for (int i = 0; i < dirlist.count(); i++)
             {
@@ -1515,7 +1513,7 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
             }
 }
 
-    // mostly done
+    // almost done
     //qDebug() << "ui-freespace: " << ui->freeSpace->text();
 
     if (ui->freeSpace->text() == "")
@@ -1546,7 +1544,6 @@ void FileWindow::on_CBMDirectory_clicked()
         ui->statusBar->addPermanentWidget(progbar);
 
         proc_cbmDir->start(cbmctrl, QStringList() << params, QIODevice::ReadWrite | QIODevice::Text);
-//        qDebug() << "Executed:" << proc_cbmDir->program() << "with args:" << proc_cbmDir->arguments();
         if (!proc_cbmDir->waitForStarted())
         {
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDir->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
@@ -1562,7 +1559,6 @@ void FileWindow::on_CBMDirectory_clicked()
 void FileWindow::on_CBMFormat_clicked()
 {
     QString diskLabel = "";
-//    QString options = "--no-bump --extended --verify --original";
     QStringList params;
     bool ok;
 
@@ -1586,8 +1582,7 @@ void FileWindow::on_CBMFormat_clicked()
     if (QMessageBox::question(this, "QtCBM", "This will erase ALL data on the floppy disk. Continue?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
     {
         diskLabel = QInputDialog::getText(this, "QtCBM", "Diskname,ID:", QLineEdit::Normal, diskLabel, &ok).toUpper();
-//        qDebug() << "disklabel:" << "\"" << diskLabel << "\"";
-//        QRegExp rx("[\\s\\S]+,[\\s\\S]+");
+
         QRegExp rx("[\\s\\S]+,[\\s\\S]+");
         if (ok)
         {
@@ -1662,6 +1657,9 @@ void FileWindow::on_CBMValidate_clicked()
         {
             disableUIElements();
         }
+
+
+
     }
 }
 
@@ -1722,7 +1720,7 @@ void FileWindow::on_copyFileFromCBMdisk_clicked()
 void FileWindow::on_copyFromCBM_clicked()
 {
 //    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), QDir::rootPath(), tr("Disk Images (*.d64)"));
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), selectedLocalFolder , tr("D64/D71/D81 Images (*.d64 *.d71 *.d81)"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), selectedLocalFolder , tr("D64/D71 Images (*.d64 *.d71)"));
 
     QStringList params;
     tracks="";
@@ -1740,6 +1738,11 @@ void FileWindow::on_copyFromCBM_clicked()
         tracks = "--start-track="+QString::number(starttrack);
         moretracks =  "--end-track="+QString::number(endtrack);
         params << tracks << moretracks;
+    }
+
+    if (readRetry)
+    {
+        params << "-r"+QString::number(retryErrors);
     }
 
     //qDebug() << "params: "+params;

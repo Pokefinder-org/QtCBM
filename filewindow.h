@@ -64,7 +64,7 @@ private slots:
     void timerClick(QString);
 
     void act_newFolder();
-    void act_renameFile();
+    QFile * act_renameFile();
     void act_deleteFile();
     void act_viewFile();
     void act_viewD64();
@@ -72,6 +72,7 @@ private slots:
     void selectedD64contents(QByteArray);
 
     void cbmStatusFinished(int,QProcess::ExitStatus);
+    void cbmJustStatusFinished(int,QProcess::ExitStatus);
     void cbmCopyProgress();
     void cbmNibwriteProgress();
     void cbmNibreadProgress();
@@ -133,6 +134,7 @@ private:
 
     // Process pointers
     QProcess *proc_cbmStatus;
+    QProcess *proc_just_CBMStatus;
     QProcess *proc_d64copy;
     QProcess *proc_nibwrite;
     QProcess *proc_nibread;
@@ -165,6 +167,7 @@ private:
     QString moretracks;
     QString appenderrormap;
     QString output;
+    QString output2;
     QString rwstate;
 
     // other variables

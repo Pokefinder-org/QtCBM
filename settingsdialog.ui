@@ -347,6 +347,19 @@
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_5">
              <item>
+              <spacer name="verticalSpacer_5">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
               <widget class="QCheckBox" name="showCommands">
                <property name="toolTip">
                 <string>Display a dialog showing the commands that will be executed and provide the opportunity to abort</string>
@@ -416,7 +429,7 @@
                <property name="sizeHint" stdset="0">
                 <size>
                  <width>20</width>
-                 <height>40</height>
+                 <height>8</height>
                 </size>
                </property>
               </spacer>
@@ -658,61 +671,6 @@
              <number>3</number>
             </property>
             <item>
-             <widget class="QLabel" name="nibheader">
-              <property name="text">
-               <string>nibread / nibwrite options:</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-              </property>
-              <property name="margin">
-               <number>0</number>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="beVerbose">
-              <property name="text">
-               <string>Verbose</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="parTransfer1571">
-              <property name="text">
-               <string>Par-transfer instead of SRQ (1571)</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="noKillertracks">
-              <property name="text">
-               <string>Disable reading of 'killer' tracks</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="readHalftracks">
-              <property name="text">
-               <string>Read halftracks</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="defaultDensities">
-              <property name="text">
-               <string>Force default densities</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="trackMatching">
-              <property name="text">
-               <string>Enable track matching (crude verify)</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QGroupBox" name="groupBox_3">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -792,6 +750,61 @@
                 <string>Reset</string>
                </property>
               </widget>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="nibheader">
+              <property name="text">
+               <string>nibread / nibwrite options:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              </property>
+              <property name="margin">
+               <number>0</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="beVerbose">
+              <property name="text">
+               <string>Verbose</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="parTransfer1571">
+              <property name="text">
+               <string>Par-transfer instead of SRQ (1571)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="noKillertracks">
+              <property name="text">
+               <string>Disable reading of 'killer' tracks</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="readHalftracks">
+              <property name="text">
+               <string>Read halftracks</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="defaultDensities">
+              <property name="text">
+               <string>Force default densities</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="trackMatching">
+              <property name="text">
+               <string>Enable track matching (crude verify)</string>
+              </property>
              </widget>
             </item>
             <item>
